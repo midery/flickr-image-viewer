@@ -3,18 +3,16 @@ package com.liarstudio.flickr_image_viewer.ui.main
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.liarstudio.flickr_image_viewer.R
 import com.liarstudio.flickr_image_viewer.data.image.ImageRepository
 import com.liarstudio.flickr_image_viewer.domain.Image
+import com.liarstudio.flickr_image_viewer.ui.base.ScreenOrientation
 import com.liarstudio.flickr_image_viewer.ui.detail.ImageDetailActivityView
 import com.liarstudio.flickr_image_viewer.ui.main.controller.ImageController
+import com.liarstudio.flickr_image_viewer.ui.main.offset.ImageListOffsetDecoration
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
@@ -24,28 +22,61 @@ import ru.surfstudio.android.easyadapter.ItemList
 
 class MainActivity : AppCompatActivity() {
 
-    private val viewDisposable = CompositeDisposable()
-
-    private lateinit var repository: ImageRepository
-
-    private val adapter = EasyAdapter()
-    private val imageController = ImageController(onImageSelected = ::openImageDetailScreen)
 
     private var images: List<Image> = listOf()
+    private val adapter = EasyAdapter().apply { isFirstInvisibleItemEnabled = false }
+    private val imageController = ImageController(onImageSelected = ::openImageDetailScreen)
+
+    private val viewDisposable = CompositeDisposable()
+    private lateinit var repository: ImageRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         repository = ImageRepository(applicationContext)
         initViews()
-        loadImages()
+        restoreImages(savedInstanceState)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putSerializable(IMAGES_EXTRA, ArrayList(images))
+    }
+
+    override fun onDestroy() {
+        viewDisposable.dispose()
+        super.onDestroy()
     }
 
     private fun initViews() {
-        main_recycler.layoutManager = StaggeredGridLayoutManager(2, RecyclerView.VERTICAL)
-        main_recycler.addItemDecoration(ImageListOffsetDecoration(this))
+        val screenOrientation = ScreenOrientation.getByValue(resources.configuration.orientation)
+        val spanCount = when (screenOrientation) {
+            ScreenOrientation.PORTRAIT -> 2
+            ScreenOrientation.LANDSCAPE -> 4
+        }
+
+        main_recycler.layoutManager = GridLayoutManager(this, spanCount)
+        main_recycler.addItemDecoration(
+            ImageListOffsetDecoration(
+                this,
+                screenOrientation
+            )
+        )
         main_recycler.adapter = adapter
         main_swipe_refresh.setOnRefreshListener { reloadImages() }
+    }
+
+    private fun restoreImages(savedInstanceState: Bundle?) {
+        if (savedInstanceState != null && savedInstanceState.containsKey(IMAGES_EXTRA)) {
+            val images = savedInstanceState.getSerializable(IMAGES_EXTRA) as ArrayList<Image>
+            if (images.isEmpty()) {
+                loadImages()
+            } else {
+                showImages(images)
+            }
+        } else {
+            loadImages()
+        }
     }
 
     private fun reloadImages() {
@@ -66,15 +97,18 @@ class MainActivity : AppCompatActivity() {
 
     private fun showImages(images: List<Image>) {
         this.images = images
-        main_progress_bar.isVisible = false
-        main_swipe_refresh.isRefreshing = false
+        hideLoaders()
         adapter.setItems(ItemList.create(images, imageController))
     }
 
     private fun showErrorMessage(error: Throwable) {
+        hideLoaders()
+        Toast.makeText(this, R.string.common_error_message, Toast.LENGTH_LONG).show()
+    }
+
+    private fun hideLoaders() {
         main_progress_bar.isVisible = false
         main_swipe_refresh.isRefreshing = false
-        Toast.makeText(this, R.string.common_error_message, Toast.LENGTH_LONG).show()
     }
 
     private fun openImageDetailScreen(image: Image) {
@@ -83,8 +117,7 @@ class MainActivity : AppCompatActivity() {
         startActivity(imageDetailIntent)
     }
 
-    override fun onDestroy() {
-        viewDisposable.dispose()
-        super.onDestroy()
+    companion object {
+        const val IMAGES_EXTRA = "IMAGES_EXTRA"
     }
 }
