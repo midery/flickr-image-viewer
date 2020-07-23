@@ -1,5 +1,6 @@
 package com.liarstudio.flickr_image_viewer.ui.main
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.LinearLayout
@@ -12,6 +13,7 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.liarstudio.flickr_image_viewer.R
 import com.liarstudio.flickr_image_viewer.data.image.ImageRepository
 import com.liarstudio.flickr_image_viewer.domain.Image
+import com.liarstudio.flickr_image_viewer.ui.detail.ImageDetailActivityView
 import com.liarstudio.flickr_image_viewer.ui.main.controller.ImageController
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -27,7 +29,7 @@ class MainActivity : AppCompatActivity() {
     private val repository = ImageRepository()
 
     private val adapter = EasyAdapter()
-    private val imageController = ImageController(onImageSelected = { /*TODO select image*/ })
+    private val imageController = ImageController(onImageSelected = ::openImageDetailScreen)
 
     private var images: List<Image> = listOf()
 
@@ -41,6 +43,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun initViews() {
         main_recycler.layoutManager = StaggeredGridLayoutManager(2, RecyclerView.VERTICAL)
+        main_recycler.addItemDecoration(ImageListOffsetDecoration(this))
         main_recycler.adapter = adapter
         main_swipe_refresh.setOnRefreshListener { reloadImages() }
     }
@@ -72,6 +75,12 @@ class MainActivity : AppCompatActivity() {
         main_progress_bar.isVisible = false
         main_swipe_refresh.isRefreshing = false
         Toast.makeText(this, R.string.common_error_message, Toast.LENGTH_LONG).show()
+    }
+
+    private fun openImageDetailScreen(image: Image) {
+        val imageDetailIntent = Intent(this, ImageDetailActivityView::class.java)
+            .apply { putExtra(ImageDetailActivityView.IMAGE_DETAIL_URL_EXTRA, image.imageUrl) }
+        startActivity(imageDetailIntent)
     }
 
     override fun onDestroy() {
