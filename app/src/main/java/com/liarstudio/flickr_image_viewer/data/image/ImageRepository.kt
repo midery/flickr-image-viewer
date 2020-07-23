@@ -15,13 +15,18 @@ class ImageRepository(context: Context) {
 
     fun getImages(): Single<List<Image>> {
         return imageApi.getImages().map { it.transform() }
-            .doOnSuccess(::saveImages)
+            .flatMap(::saveImages)
             .onErrorResumeNext { error: Throwable -> loadSavedImagesWithoutNetwork(error) }
     }
 
-    private fun saveImages(images: List<Image>) {
+    private fun saveImages(images: List<Image>): Single<List<Image>> {
         val imageEntities = images.map { ImageEntity(it.id, it.secret, it.farmId, it.serverId) }
-        imageDao.saveImages(*imageEntities.toTypedArray())
+        return imageDao.removeAllImages()
+            .andThen(
+                imageDao.saveImages(*imageEntities.toTypedArray())
+            ).andThen(
+                Single.just(images)
+            )
     }
 
     private fun loadSavedImagesWithoutNetwork(error: Throwable): Single<List<Image>> {

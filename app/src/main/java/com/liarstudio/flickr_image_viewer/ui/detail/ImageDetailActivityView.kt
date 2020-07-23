@@ -17,6 +17,8 @@ class ImageDetailActivityView : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_image_detail)
 
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
         val imageUrl = intent.getStringExtra(IMAGE_DETAIL_URL_EXTRA)
         Glide.with(image_detail_iv)
             .load(imageUrl)
