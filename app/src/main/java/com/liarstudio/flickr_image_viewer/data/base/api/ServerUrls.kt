@@ -1,4 +1,4 @@
-package com.liarstudio.flickr_image_viewer.data.base
+package com.liarstudio.flickr_image_viewer.data.base.api
 
 object ServerUrls {
     const val BASE_URL = "https://api.flickr.com/services/"

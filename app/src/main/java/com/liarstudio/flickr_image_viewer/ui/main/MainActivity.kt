@@ -26,7 +26,7 @@ class MainActivity : AppCompatActivity() {
 
     private val viewDisposable = CompositeDisposable()
 
-    private val repository = ImageRepository()
+    private lateinit var repository: ImageRepository
 
     private val adapter = EasyAdapter()
     private val imageController = ImageController(onImageSelected = ::openImageDetailScreen)
@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        repository = ImageRepository(applicationContext)
         initViews()
         loadImages()
     }
@@ -59,7 +59,7 @@ class MainActivity : AppCompatActivity() {
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 { images -> showImages(images) },
-                { error -> showErrorMessage() }
+                { error -> showErrorMessage(error) }
             )
         viewDisposable.add(loadImagesDisposable)
     }
@@ -71,7 +71,7 @@ class MainActivity : AppCompatActivity() {
         adapter.setItems(ItemList.create(images, imageController))
     }
 
-    private fun showErrorMessage() {
+    private fun showErrorMessage(error: Throwable) {
         main_progress_bar.isVisible = false
         main_swipe_refresh.isRefreshing = false
         Toast.makeText(this, R.string.common_error_message, Toast.LENGTH_LONG).show()

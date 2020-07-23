@@ -15,10 +15,10 @@ import java.io.Serializable
 
  */
 data class Image(
-    private val id: String = "",
-    private val farmId: String = "",
-    private val serverId: String = "",
-    private val secret: String = ""
+    val id: String = "",
+    val farmId: String = "",
+    val serverId: String = "",
+    val secret: String = ""
 ) : Serializable {
 
     val imageUrl: String

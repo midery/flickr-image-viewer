@@ -1,14 +1,43 @@
 package com.liarstudio.flickr_image_viewer.data.image
 
-import com.liarstudio.flickr_image_viewer.data.base.RetrofitService
+import android.content.Context
+import com.liarstudio.flickr_image_viewer.data.base.api.ApiProvider
+import com.liarstudio.flickr_image_viewer.data.base.db.DaoProvider
+import com.liarstudio.flickr_image_viewer.data.image.db.entity.ImageEntity
 import com.liarstudio.flickr_image_viewer.domain.Image
-import io.reactivex.Observable
+import io.reactivex.Single
+import java.net.UnknownHostException
 
-class ImageRepository {
+class ImageRepository(context: Context) {
 
-    private val imageApi by lazy { RetrofitService.imageApi }
+    private val imageApi by lazy { ApiProvider.imageApi }
+    private val imageDao by lazy { DaoProvider.obtainUserDao(context) }
 
-    fun getImages(): Observable<List<Image>> {
+    fun getImages(): Single<List<Image>> {
         return imageApi.getImages().map { it.transform() }
+            .doOnSuccess(::saveImages)
+            .onErrorResumeNext { error: Throwable -> loadSavedImagesWithoutNetwork(error) }
+    }
+
+    private fun saveImages(images: List<Image>) {
+        val imageEntities = images.map { ImageEntity(it.id, it.secret, it.farmId, it.serverId) }
+        imageDao.saveImages(*imageEntities.toTypedArray())
+    }
+
+    private fun loadSavedImagesWithoutNetwork(error: Throwable): Single<List<Image>> {
+        val userHasNoInternet = error is UnknownHostException
+        return if (userHasNoInternet) {
+            getSavedImages()
+        } else {
+            throw error
+        }
+    }
+
+    private fun getSavedImages(): Single<List<Image>> {
+        return imageDao.getImages().map { entities ->
+            entities.map { imageEntity ->
+                imageEntity.transform()
+            }
+        }
     }
 }
