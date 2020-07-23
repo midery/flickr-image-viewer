@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.liarstudio.flickr_image_viewer.ui.base.SquareCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:foreground="@drawable/bg_image_ripple"
+    app:cardCornerRadius="16dp">
+
+    <ImageView
+        android:id="@+id/list_image_iv"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</com.liarstudio.flickr_image_viewer.ui.base.SquareCardView>
