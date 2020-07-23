@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Flickr Image Viewer</string>
     <string name="common_error_message">An error occurred while performing request. Please, try again later.</string>
+    <string name="image_detail_title">Image details</string>
 </resources>

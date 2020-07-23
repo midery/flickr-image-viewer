@@ -19,7 +19,9 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ui.detail.ImageDetailActivityView" />
+        <activity
+            android:name=".ui.detail.ImageDetailActivityView"
+            android:label="@string/image_detail_title" />
 
     </application>
 
